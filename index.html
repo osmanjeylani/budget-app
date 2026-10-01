@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Budget</title>
+<meta name="description" content="Enkel budget per löneperiod, sparmål och delade utgifter med kompisar.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#f5f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151614" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<style>
+  :root {
+    --bg: #f5f5f2;
+    --card: #ffffff;
+    --text: #1d1d1b;
+    --muted: #6b6b66;
+    --line: #e4e4de;
+    --accent: #2f6b4f;
+    --accent-soft: #e3efe8;
+    --warn: #b0602a;
+    --warn-soft: #f7e9df;
+    --gold: #b8860b;
+    --gold-soft: #f8efd9;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151614;
+      --card: #1f201d;
+      --text: #ecece6;
+      --muted: #9a9a92;
+      --line: #32332f;
+      --accent: #6fbf94;
+      --accent-soft: #23362b;
+      --warn: #e09a68;
+      --warn-soft: #3a2a1f;
+      --gold: #e3b94f;
+      --gold-soft: #3a321d;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main {
+    max-width: 560px; margin: 0 auto;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom));
+  }
+  /* Ingen markering/zoom vid dubbeltryck när den körs som app */
+  button, .chip, nav.bottom { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  h1 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 4px 0 12px; letter-spacing: .02em; }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .hero { text-align: center; padding: 26px 18px; }
+  .hero .label { color: var(--muted); font-size: 14px; }
+  .hero .big { font-size: 44px; font-weight: 700; letter-spacing: -.02em; margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
+  .hero .big.neg { color: var(--warn); }
+  .hero .sub { color: var(--muted); font-size: 14px; }
+  .forecast {
+    margin-top: 14px; padding: 10px 12px; border-radius: 10px;
+    font-size: 14px; background: var(--accent-soft);
+  }
+  .forecast.warn { background: var(--warn-soft); }
+  .wins { list-style: none; margin: 10px 0 0; padding: 0; text-align: left; }
+  .wins li { font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--gold-soft); margin-top: 6px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .spread { justify-content: space-between; }
+  input, select, button { font: inherit; color: inherit; }
+  input, select {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; width: 100%; min-width: 0;
+  }
+  input[type=checkbox] { width: auto; accent-color: var(--accent); }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .amount-input { font-size: 22px; font-weight: 600; }
+  button {
+    border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer;
+    background: var(--accent); color: var(--card); font-weight: 600; white-space: nowrap;
+  }
+  button.small { padding: 6px 12px; font-size: 14px; }
+  button.ghost { background: transparent; color: var(--muted); padding: 6px 8px; font-weight: 400; }
+  button.ghost:hover { color: var(--text); }
+  button.outline { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .chip {
+    background: var(--bg); color: var(--text); border: 1px solid var(--line);
+    padding: 6px 10px; border-radius: 999px; font-weight: 400; font-size: 14px;
+  }
+  .chip.on { background: var(--accent); color: var(--card); border-color: var(--accent); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .list li:first-child { border-top: 0; }
+  .list .what { flex: 1; min-width: 0; }
+  .list .what small { display: block; color: var(--muted); font-size: 13px; }
+  .amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .pos { color: var(--accent); }
+  .negc { color: var(--warn); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); transition: width .5s; }
+  .bar.thick { height: 12px; border-radius: 6px; }
+  .bar.done > span { background: var(--gold); }
+  .cat-row { margin-bottom: 10px; }
+  .cat-row .row { justify-content: space-between; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid label, .lbl { font-size: 13px; color: var(--muted); display: block; }
+  .grid .full { grid-column: 1 / -1; }
+  .subtabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .subtabs button { flex: 1; background: var(--card); color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
+  .subtabs button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); font-size: 14px; }
+
+  /* Bottennavigering */
+  nav.bottom {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--card); border-top: 1px solid var(--line);
+    display: flex; justify-content: center; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.bottom .inner { display: flex; width: 100%; max-width: 560px; }
+  nav.bottom button {
+    flex: 1; background: none; color: var(--muted); font-weight: 500; font-size: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px;
+  }
+  nav.bottom button .ico { font-size: 20px; line-height: 1; }
+  nav.bottom button.on { color: var(--text); }
+
+  /* Sparmål */
+  .goal .head { display: flex; align-items: center; gap: 12px; }
+  .goal .emoji { font-size: 30px; }
+  .goal .title { font-weight: 600; }
+  .goal .pct { margin-left: auto; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .goal .meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .goal .hint { font-size: 14px; margin-top: 10px; }
+  .goal form { margin-top: 12px; }
+
+  /* Grupper */
+  .group-card { cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  .group-card:hover { border-color: var(--muted); }
+  .group-card .emoji { font-size: 28px; }
+  .transfer { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg); margin-top: 8px; }
+  .transfer .who { flex: 1; font-size: 15px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px;
+    font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none;
+    max-width: calc(100% - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; }
+  .confetti { position: fixed; top: -30px; font-size: 22px; pointer-events: none; animation: fall linear forwards; z-index: 10; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .7; } }
+</style>
+</head>
+<body>
+<main>
+
+<!-- ================= BUDGET ================= -->
+<div data-view="budget">
+  <h1 id="periodTitle">Budget</h1>
+
+  <section class="card hero">
+    <div class="label">Kvar att spendera idag</div>
+    <div class="big" id="todayLeft">–</div>
+    <div class="sub" id="periodLeft"></div>
+    <div class="forecast" id="forecast"></div>
+    <ul class="wins" id="wins"></ul>
+  </section>
+
+  <section class="card">
+    <form id="addForm" autocomplete="off">
+      <div class="row">
+        <input class="amount-input" id="amount" type="number" inputmode="decimal" step="any" min="0" placeholder="0 kr" required>
+        <button type="submit">Lägg till</button>
+      </div>
+      <div class="chips" id="catChips"></div>
+      <input id="note" placeholder="Anteckning (valfritt)">
+    </form>
+  </section>
+
+  <div class="subtabs">
+    <button data-sub="tx" class="on">Utgifter</button>
+    <button data-sub="cats">Kategorier</button>
+    <button data-sub="fixed">Fasta</button>
+  </div>
+
+  <section class="card" data-subpanel="tx">
+    <h2>Den här perioden</h2>
+    <ul class="list" id="txList"></ul>
+  </section>
+
+  <section class="card hidden" data-subpanel="cats">
+    <h2>Vart pengarna tog vägen</h2>
+    <div id="catBreakdown"></div>
+  </section>
+
+  <section class="card hidden" data-subpanel="fixed">
+    <h2>Fasta utgifter &amp; prenumerationer</h2>
+    <ul class="list" id="fixedList"></ul>
+    <form id="fixedForm" class="grid" style="margin-top:14px" autocomplete="off">
+      <div class="full"><label>Namn</label><input id="fxName" placeholder="t.ex. Hyra, Spotify" required></div>
+      <div><label>Belopp (kr/mån)</label><input id="fxAmount" type="number" step="any" min="0" required></div>
+      <div><label>Dras dag</label><input id="fxDay" type="number" min="1" max="31" value="1" required></div>
+      <div class="full"><button type="submit" style="width:100%">Lägg till fast utgift</button></div>
+    </form>
+  </section>
+</div>
+
+<!-- ================= SPARMÅL ================= -->
+<div data-view="goals" class="hidden">
+  <h1>Sparmål</h1>
+  <div id="goalList"></div>
+
+  <section class="card">
+    <h2>Nytt sparmål</h2>
+    <form id="goalForm" class="grid" autocomplete="off">
+      <div class="full chips" style="margin:0" id="goalKind">
+        <button type="button" class="chip on" data-kind="trip">✈️ Resa</button>
+        <button type="button" class="chip" data-kind="sum">💰 Summa</button>
+      </div>
+      <div class="full"><label id="gNameLbl">Vart ska du resa?</label><input id="gName" placeholder="t.ex. Japan" required></div>
+      <div><label>Mål (kr)</label><input id="gTarget" type="number" step="any" min="1" required></div>
+      <div><label id="gDateLbl">Avresa</label><input id="gDate" type="date"></div>
+      <div class="full"><label>Redan sparat (kr, valfritt)</label><input id="gSaved" type="number" step="any" min="0"></div>
+      <div class="full"><button type="submit" style="width:100%">Skapa sparmål</button></div>
+    </form>
+  </section>
+</div>
+
+<!-- ================= GRUPPER ================= -->
+<div data-view="groups" class="hidden">
+  <div id="groupOverview">
+    <h1>Grupper</h1>
+    <p class="muted" style="margin-top:-6px">Dela kostnader på resor, i hushållet eller med kompisar. Appen räknar ut vem som ska betala vem.</p>
+    <div id="groupList"></div>
+    <section class="card">
+      <h2>Ny grupp</h2>
+      <form id="groupForm" class="grid" autocomplete="off">
+        <div class="full"><label>Namn</label><input id="grName" placeholder="t.ex. Kroatienresan, Lägenheten" required></div>
+        <div class="full"><label>Medlemmar förutom dig (separera med komma)</label><input id="grMembers" placeholder="Anna, Ali, Sara" required></div>
+        <div class="full"><button type="submit" style="width:100%">Skapa grupp</button></div>
+      </form>
+    </section>
+  </div>
+  <div id="groupDetail" class="hidden"></div>
+</div>
+
+<!-- ================= INSTÄLLNINGAR ================= -->
+<div data-view="settings" class="hidden">
+  <h1>Inställningar</h1>
+  <section class="card hidden" id="installCard">
+    <h2>📲 Installera appen</h2>
+    <p class="muted" id="installText" style="margin:0 0 12px">Lägg Budget på hemskärmen så öppnas den som en vanlig app, även utan internet.</p>
+    <button id="installBtn" class="hidden" style="width:100%">Installera på hemskärmen</button>
+  </section>
+  <section class="card">
+    <form id="settingsForm" class="grid" autocomplete="off">
+      <div><label>Lön efter skatt (kr/mån)</label><input id="sIncome" type="number" step="any" min="0"></div>
+      <div><label>Lönedag</label><input id="sPayday" type="number" min="1" max="31"></div>
+      <div class="full"><label>Spara varje månad (kr)</label><input id="sSave" type="number" step="any" min="0"></div>
+      <div class="full"><button type="submit" style="width:100%">Spara</button></div>
+    </form>
+    <p class="empty" style="margin-top:14px">
+      Perioden räknas från lön till lön. Infaller lönedagen på en helg flyttas den till fredagen innan.
+      All data sparas bara i den här webbläsaren.
+    </p>
+    <div class="row" style="margin-top:8px">
+      <button class="ghost" id="exportBtn">⬇ Exportera backup</button>
+      <button class="ghost" id="importBtn">⬆ Importera backup</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+    </div>
+  </section>
+</div>
+
+</main>
+
+<nav class="bottom"><div class="inner">
+  <button data-nav="budget" class="on"><span class="ico">💰</span>Budget</button>
+  <button data-nav="goals"><span class="ico">🎯</span>Sparmål</button>
+  <button data-nav="groups"><span class="ico">👥</span>Grupper</button>
+  <button data-nav="settings"><span class="ico">⚙️</span>Inställningar</button>
+</div></nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = [
+  { id: 'mat',       label: '🛒 Mat' },
+  { id: 'resto',     label: '🍔 Restaurang' },
+  { id: 'transport', label: '🚌 Transport' },
+  { id: 'noje',      label: '🎉 Nöje' },
+  { id: 'shopping',  label: '🛍️ Shopping' },
+  { id: 'halsa',     label: '💊 Hälsa' },
+  { id: 'hem',       label: '🏠 Hem' },
+  { id: 'ovrigt',    label: '📦 Övrigt' },
+];
+const STORAGE_KEY = 'budget-app-v1';
+const DAY = 86400000;
+const ME = 'Jag';
+
+// ---------- Data ----------
+function defaultState() {
+  return { settings: { income: 0, payday: 25, save: 0 }, tx: [], fixed: [], goals: [], groups: [] };
+}
+function normalize(s) {
+  const d = defaultState();
+  return { ...d, ...s, settings: { ...d.settings, ...(s.settings || {}) } };
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && s.settings) return normalize(s);
+  } catch (e) {}
+  return defaultState();
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+let state = load();
+let selectedCat = 'mat';
+let goalKind = 'trip';
+let openGroupId = null;
+
+// ---------- Hjälpfunktioner ----------
+const kr = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 });
+const kr2 = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 2 });
+const fmt = n => kr.format(Math.round(n));
+const fmtOre = o => (o % 100 === 0 ? kr : kr2).format(o / 100); // belopp i öre
+const dateFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' });
+const longDateFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const catLabel = id => (CATEGORIES.find(c => c.id === id) || CATEGORIES.at(-1)).label;
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const $ = id => document.getElementById(id);
+
+// Lönedatum för en viss månad: flyttas till fredagen innan om det är helg.
+function paydayFor(year, month) {
+  const dim = new Date(year, month + 1, 0).getDate();
+  const d = new Date(year, month, Math.min(state.settings.payday, dim));
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+// Löneperiod som innehåller ett visst datum: [start, end) där end är nästa lönedag.
+function periodFor(day) {
+  const y = day.getFullYear(), m = day.getMonth();
+  const thisPay = paydayFor(y, m);
+  if (day >= thisPay) return { start: thisPay, end: paydayFor(y, m + 1) };
+  return { start: paydayFor(y, m - 1), end: thisPay };
+}
+
+const sumTx = (from, to, cat) => state.tx.reduce((s, t) => {
+  const d = parseYmd(t.date);
+  return d >= from && d < to && (!cat || t.cat === cat) ? s + t.amount : s;
+}, 0);
+
+// ---------- Budgetberäkningar ----------
+function compute() {
+  const today = startOfDay(new Date());
+  const { start, end } = periodFor(today);
+  const fixedTotal = state.fixed.reduce((s, f) => s + f.amount, 0);
+  const variable = state.settings.income - fixedTotal - state.settings.save;
+
+  const periodTx = state.tx.filter(t => { const d = parseYmd(t.date); return d >= start && d < end; });
+  const spent = periodTx.reduce((s, t) => s + t.amount, 0);
+  const spentToday = periodTx.filter(t => t.date === ymd(today)).reduce((s, t) => s + t.amount, 0);
+
+  const totalDays = daysBetween(start, end);
+  const daysLeft = Math.max(1, daysBetween(today, end)); // inklusive idag
+  const daysElapsed = totalDays - daysLeft + 1;
+
+  // Dagsbudget räknas på det som var kvar i morse, så den inte hoppar under dagen.
+  const leftThisMorning = variable - (spent - spentToday);
+  const todayLeft = leftThisMorning / daysLeft - spentToday;
+
+  const avgPerDay = spent / daysElapsed;
+  const projectedEnd = variable - avgPerDay * totalDays;
+
+  return { today, start, end, fixedTotal, variable, periodTx, spent, spentToday, todayLeft, daysLeft, projectedEnd, daysElapsed, totalDays };
+}
+
+// Antal dagar i rad (till och med igår) som man höll sig under dagsbudgeten.
+function underBudgetStreak(c) {
+  if (state.settings.income <= 0) return 0;
+  let streak = 0;
+  for (let d = new Date(c.start); d < c.today; d.setDate(d.getDate() + 1)) {
+    const next = new Date(d.getTime() + DAY);
+    const before = sumTx(c.start, d);
+    const budget = (c.variable - before) / daysBetween(d, c.end);
+    const spentThatDay = sumTx(d, next);
+    streak = spentThatDay <= budget ? streak + 1 : 0;
+  }
+  return streak;
+}
+
+// Positiv förstärkning: små vinster att lyfta fram.
+function computeWins(c) {
+  const wins = [];
+  const streak = underBudgetStreak(c);
+  if (streak >= 2) wins.push(`🔥 ${streak} dagar i rad under dagsbudget!`);
+
+  // Jämför med samma antal dagar in i förra perioden.
+  const prev = periodFor(new Date(c.start.getTime() - DAY));
+  const prevCut = new Date(Math.min(prev.end, prev.start.getTime() + c.daysElapsed * DAY));
+  const prevTotal = sumTx(prev.start, prevCut);
+  const hasPrevData = state.tx.some(t => { const d = parseYmd(t.date); return d >= prev.start && d < prev.end; });
+  if (hasPrevData && c.spent > 0 && prevTotal > 0 && c.spent < prevTotal * 0.9) {
+    wins.push(`🎉 ${Math.round((1 - c.spent / prevTotal) * 100)} % mindre spenderat än vid samma tid förra perioden`);
+  }
+  if (hasPrevData) {
+    let best = null;
+    for (const cat of CATEGORIES) {
+      const p = sumTx(prev.start, prevCut, cat.id);
+      const n = sumTx(c.start, c.end, cat.id);
+      if (p >= 200 && n < p * 0.8) {
+        const pct = Math.round((1 - n / p) * 100);
+        if (!best || pct > best.pct) best = { cat, pct };
+      }
+    }
+    if (best) wins.push(`👏 ${best.pct} % mindre på ${best.cat.label} än förra perioden`);
+  }
+
+  // Närmaste sparmål som inte är klart.
+  const g = state.goals.filter(g => g.saved < g.target).sort((a, b) => b.saved / b.target - a.saved / a.target)[0];
+  if (g && g.saved > 0) {
+    wins.push(`${goalEmoji(g)} ${esc(g.name)}: ${Math.floor(g.saved / g.target * 100)} % klart, bara ${fmt(g.target - g.saved)} kvar`);
+  }
+  if (!wins.length && c.spentToday === 0 && state.settings.income > 0 && c.todayLeft > 0) {
+    wins.push('☀️ Inga utgifter idag ännu. Snyggt!');
+  }
+  return wins.slice(0, 3);
+}
+
+// ---------- Sparmål ----------
+const goalEmoji = g => g.kind === 'trip' ? '✈️' : '💰';
+
+function goalPlan(g) {
+  const left = g.target - g.saved;
+  if (left <= 0) return g.kind === 'trip' ? 'Målet är nått. Trevlig resa! 🌴' : 'Målet är nått. Grymt jobbat! 🏆';
+  if (!g.date) return `${fmt(left)} kvar till målet.`;
+  const today = startOfDay(new Date());
+  const days = daysBetween(today, parseYmd(g.date));
+  if (days <= 0) return `${fmt(left)} kvar. Datumet har passerat, vill du flytta det?`;
+  const months = Math.max(1, Math.round(days / 30.44));
+  const when = g.kind === 'trip' ? `Resan är om ${plural(days, 'dag', 'dagar')}.` : `${plural(days, 'dag', 'dagar')} kvar.`;
+  return `${when} Spara ${fmt(Math.ceil(left / months))}/mån så är du i mål.`;
+}
+
+const MILESTONES = [25, 50, 75, 100];
+const MILESTONE_MSG = {
+  25: 'En fjärdedel klar! Bra start 💪',
+  50: 'Halvvägs! 🎉',
+  75: 'Tre fjärdedelar, snart där! 🚀',
+  100: 'MÅLET ÄR NÅTT! 🏆',
+};
+
+function depositToGoal(id, amount) {
+  const g = state.goals.find(g => g.id === id);
+  if (!g) return;
+  const beforePct = g.saved / g.target * 100;
+  g.saved = Math.max(0, g.saved + amount);
+  const afterPct = g.saved / g.target * 100;
+  save();
+  render();
+  const hit = MILESTONES.filter(m => beforePct < m && afterPct >= m).pop();
+  if (hit) {
+    confetti(hit === 100 ? 60 : 25);
+    toast(`${goalEmoji(g)} ${g.name}: ${MILESTONE_MSG[hit]}`, 3500);
+  } else if (amount > 0) {
+    toast(`+${fmt(amount)} till ${g.name}. Varje krona räknas! ✨`);
+  } else {
+    toast(`${fmt(-amount)} uttaget från ${g.name}`);
+  }
+}
+
+// ---------- Grupper (delade kostnader) ----------
+// Alla belopp i grupper lagras i öre för att undvika avrundningsfel.
+function groupBalances(g) {
+  const bal = Object.fromEntries(g.members.map(m => [m, 0]));
+  for (const e of g.expenses) {
+    bal[e.paidBy] += e.amount;
+    const n = e.split.length;
+    const base = Math.floor(e.amount / n);
+    let rest = e.amount - base * n;
+    e.split.forEach(m => { bal[m] -= base + (rest-- > 0 ? 1 : 0); });
+  }
+  for (const s of g.settlements) {
+    bal[s.from] += s.amount;
+    bal[s.to] -= s.amount;
+  }
+  return bal;
+}
+
+// Minimerar antalet överföringar: största skuldsatta betalar till största fordringsägare.
+function settleUp(bal) {
+  const debtors = [], creditors = [];
+  for (const [m, v] of Object.entries(bal)) {
+    if (v < 0) debtors.push({ m, v: -v });
+    else if (v > 0) creditors.push({ m, v });
+  }
+  debtors.sort((a, b) => b.v - a.v);
+  creditors.sort((a, b) => b.v - a.v);
+  const transfers = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amt = Math.min(debtors[i].v, creditors[j].v);
+    if (amt > 0) transfers.push({ from: debtors[i].m, to: creditors[j].m, amount: amt });
+    debtors[i].v -= amt;
+    creditors[j].v -= amt;
+    if (debtors[i].v === 0) i++;
+    if (creditors[j].v === 0) j++;
+  }
+  return transfers;
+}
+
+const displayName = m => m === ME ? 'Du' : m;
+function transferText(t) {
+  if (t.from === ME) return `<strong>Du</strong> ska betala <strong>${esc(t.to)}</strong>`;
+  if (t.to === ME) return `<strong>${esc(t.from)}</strong> ska betala <strong>dig</strong>`;
+  return `<strong>${esc(t.from)}</strong> ska betala <strong>${esc(t.to)}</strong>`;
+}
+
+// ---------- Rendering ----------
+function render() {
+  renderBudget();
+  renderGoals();
+  renderGroups();
+  $('sIncome').value = state.settings.income || '';
+  $('sPayday').value = state.settings.payday;
+  $('sSave').value = state.settings.save || '';
+}
+
+function renderBudget() {
+  const c = compute();
+  const lastDay = new Date(c.end.getTime() - DAY);
+  $('periodTitle').textContent = `Löneperiod ${dateFmt.format(c.start)} – ${dateFmt.format(lastDay)}`;
+
+  const big = $('todayLeft');
+  const forecast = $('forecast');
+  if (state.settings.income <= 0) {
+    big.textContent = '–';
+    big.classList.remove('neg');
+    $('periodLeft').textContent = 'Börja med att fylla i din lön under Inställningar.';
+    forecast.className = 'forecast hidden';
+  } else {
+    big.textContent = fmt(c.todayLeft);
+    big.classList.toggle('neg', c.todayLeft < 0);
+    $('periodLeft').textContent = `${fmt(c.variable - c.spent)} kvar till lön · ${plural(c.daysLeft, 'dag', 'dagar')}`;
+    if (c.spent === 0) {
+      forecast.className = 'forecast';
+      forecast.textContent = `Rörlig budget den här perioden: ${fmt(c.variable)} (efter fasta utgifter och sparande).`;
+    } else if (c.projectedEnd >= 0) {
+      forecast.className = 'forecast';
+      forecast.textContent = `👍 I nuvarande takt har du ungefär ${fmt(c.projectedEnd)} kvar vid lön.`;
+    } else {
+      forecast.className = 'forecast warn';
+      forecast.textContent = `I nuvarande takt går du ${fmt(-c.projectedEnd)} back. Håll dig till dagsbudgeten så går det ihop.`;
+    }
+  }
+  $('wins').innerHTML = computeWins(c).map(w => `<li>${w}</li>`).join('');
+
+  const sorted = [...c.periodTx].sort((a, b) => b.date.localeCompare(a.date) || b.created - a.created);
+  $('txList').innerHTML = sorted.length ? sorted.map(t => `
+    <li>
+      <div class="what">${esc(catLabel(t.cat))}${t.note ? ' · ' + esc(t.note) : ''}
+        <small>${dateFmt.format(parseYmd(t.date))}</small></div>
+      <span class="amt">${fmt(t.amount)}</span>
+      <button class="ghost" data-del-tx="${t.id}" title="Ta bort">✕</button>
+    </li>`).join('') : '<li class="empty">Inga utgifter än. Lägg till din första ovanför.</li>';
+
+  const byCat = {};
+  c.periodTx.forEach(t => byCat[t.cat] = (byCat[t.cat] || 0) + t.amount);
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  const max = cats.length ? cats[0][1] : 1;
+  $('catBreakdown').innerHTML = cats.length ? cats.map(([id, sum]) => `
+    <div class="cat-row">
+      <div class="row"><span>${esc(catLabel(id))}</span><span>${fmt(sum)} · ${Math.round(sum / c.spent * 100)} %</span></div>
+      <div class="bar"><span style="width:${(sum / max * 100).toFixed(1)}%"></span></div>
+    </div>`).join('') : '<p class="empty">Inget spenderat den här perioden.</p>';
+
+  const withNext = state.fixed.map(f => ({ ...f, inDays: daysUntilDay(f.day, c.today) })).sort((a, b) => a.inDays - b.inDays);
+  $('fixedList').innerHTML = withNext.length ? withNext.map(f => `
+    <li>
+      <div class="what">${esc(f.name)}
+        <small>${f.inDays === 0 ? 'Dras idag' : `Dras om ${plural(f.inDays, 'dag', 'dagar')}`} (den ${f.day}:e)</small></div>
+      <span class="amt">${fmt(f.amount)}</span>
+      <button class="ghost" data-del-fixed="${f.id}" title="Ta bort">✕</button>
+    </li>`).join('') + `<li><div class="what"><strong>Totalt per månad</strong></div><span class="amt">${fmt(c.fixedTotal)}</span><span style="width:34px"></span></li>`
+    : '<li class="empty">Lägg till hyra, el, mobil, streamingtjänster m.m.</li>';
+}
+
+function renderGoals() {
+  const goals = [...state.goals].sort((a, b) => (a.saved >= a.target) - (b.saved >= b.target) || a.created - b.created);
+  $('goalList').innerHTML = goals.length ? goals.map(g => {
+    const pct = Math.min(100, g.saved / g.target * 100);
+    const done = g.saved >= g.target;
+    return `
+    <section class="card goal">
+      <div class="head">
+        <span class="emoji">${goalEmoji(g)}</span>
+        <div>
+          <div class="title">${esc(g.name)}</div>
+          <div class="muted">${g.date ? (g.kind === 'trip' ? 'Avresa ' : 'Klart till ') + longDateFmt.format(parseYmd(g.date)) : 'Inget datum'}</div>
+        </div>
+        <span class="pct">${Math.floor(pct)} %</span>
+      </div>
+      <div class="bar thick ${done ? 'done' : ''}" style="margin-top:12px"><span style="width:${pct.toFixed(1)}%"></span></div>
+      <div class="meta"><span>${fmt(g.saved)} sparat</span><span>Mål ${fmt(g.target)}</span></div>
+      <div class="hint">${goalPlan(g)}</div>
+      <form class="row" data-deposit="${g.id}" autocomplete="off">
+        <input type="number" step="any" placeholder="Belopp" required>
+        <button type="submit" class="small">Sätt in</button>
+        <button type="button" class="small outline" data-withdraw="${g.id}">Ta ut</button>
+        <button type="button" class="ghost" data-del-goal="${g.id}" title="Ta bort mål">✕</button>
+      </form>
+    </section>`;
+  }).join('') : '<p class="muted">Inga sparmål än. Vad drömmer du om? En resa, en buffert, en ny dator?</p>';
+}
+
+function renderGroups() {
+  $('groupOverview').classList.toggle('hidden', !!openGroupId);
+  $('groupDetail').classList.toggle('hidden', !openGroupId);
+
+  $('groupList').innerHTML = state.groups.map(g => {
+    const my = groupBalances(g)[ME] || 0;
+    const status = my > 0 ? `<span class="amt pos">Du får ${fmtOre(my)}</span>`
+                 : my < 0 ? `<span class="amt negc">Du är skyldig ${fmtOre(-my)}</span>`
+                 : `<span class="muted">Kvitt ✓</span>`;
+    return `
+    <section class="card group-card" data-open-group="${g.id}">
+      <span class="emoji">👥</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">${esc(g.name)}</div>
+        <div class="muted">${g.members.map(displayName).map(esc).join(', ')}</div>
+      </div>
+      ${status}
+    </section>`;
+  }).join('');
+
+  const g = state.groups.find(g => g.id === openGroupId);
+  if (!g) { openGroupId = null; $('groupDetail').innerHTML = ''; return; }
+
+  const bal = groupBalances(g);
+  const transfers = settleUp(bal);
+  const total = g.expenses.reduce((s, e) => s + e.amount, 0);
+  const history = [
+    ...g.expenses.map(e => ({ ...e, type: 'exp' })),
+    ...g.settlements.map(s => ({ ...s, type: 'set' })),
+  ].sort((a, b) => b.created - a.created);
+
+  $('groupDetail').innerHTML = `
+    <div class="row spread" style="margin-bottom:8px">
+      <button class="ghost" data-close-group>← Alla grupper</button>
+      <button class="ghost" data-del-group="${g.id}">Ta bort grupp</button>
+    </div>
+    <h1 style="font-size:20px;color:var(--text)">👥 ${esc(g.name)}</h1>
+    <p class="muted" style="margin-top:-6px">Totalt ${fmtOre(total)} i gemensamma utgifter</p>
+
+    <section class="card">
+      <h2>Vem ska betala vem?</h2>
+      ${transfers.length ? transfers.map(t => `
+        <div class="transfer">
+          <div class="who">${transferText(t)}<br><span class="amt">${fmtOre(t.amount)}</span></div>
+          <button class="small" data-settle='${esc(JSON.stringify(t))}'>Markera betald</button>
+        </div>`).join('')
+        : `<p class="muted">${g.expenses.length ? 'Alla är kvitt! 🎉' : 'Inga utgifter än.'}</p>`}
+    </section>
+
+    <section class="card">
+      <h2>Lägg till utgift</h2>
+      <form id="groupExpenseForm" class="grid" autocomplete="off">
+        <div class="full"><label>Vad?</label><input name="desc" placeholder="t.ex. Middag, Hyrbil, ICA" required></div>
+        <div><label>Belopp (kr)</label><input name="amount" type="number" step="0.01" min="0.01" required></div>
+        <div><label>Betalt av</label><select name="paidBy">${g.members.map(m => `<option value="${esc(m)}">${esc(displayName(m))}</option>`).join('')}</select></div>
+        <div class="full"><span class="lbl">Delas lika mellan</span>
+          <div class="checks">${g.members.map(m => `<label><input type="checkbox" name="split" value="${esc(m)}" checked> ${esc(displayName(m))}</label>`).join('')}</div>
+        </div>
+        <div class="full"><label class="checks" style="margin:0"><input type="checkbox" name="toBudget" checked> <span style="color:var(--text)">Räkna min andel i min budget</span></label></div>
+        <div class="full"><button type="submit" style="width:100%">Lägg till</button></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Saldo</h2>
+      <ul class="list">${g.members.map(m => {
+        const v = bal[m];
+        return `<li><div class="what">${esc(displayName(m))}</div>
+          <span class="amt ${v > 0 ? 'pos' : v < 0 ? 'negc' : ''}">${v > 0 ? '+' : ''}${fmtOre(v)}</span></li>`;
+      }).join('')}</ul>
+      <form id="addMemberForm" class="row" style="margin-top:12px" autocomplete="off">
+        <input name="name" placeholder="Lägg till medlem" required>
+        <button type="submit" class="small">Lägg till</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Historik</h2>
+      <ul class="list">${history.length ? history.map(h => h.type === 'exp' ? `
+        <li><div class="what">${esc(h.desc)}
+          <small>${esc(displayName(h.paidBy))} betalade · delas av ${h.split.length} · ${dateFmt.format(parseYmd(h.date))}</small></div>
+          <span class="amt">${fmtOre(h.amount)}</span>
+          <button class="ghost" data-del-gexp="${h.id}" title="Ta bort">✕</button></li>` : `
+        <li><div class="what">💸 ${esc(displayName(h.from))} betalade ${esc(h.to === ME ? 'dig' : h.to)}
+          <small>${dateFmt.format(parseYmd(h.date))}</small></div>
+          <span class="amt">${fmtOre(h.amount)}</span>
+          <button class="ghost" data-del-gset="${h.id}" title="Ångra">✕</button></li>`).join('')
+        : '<li class="empty">Inget här än.</li>'}</ul>
+    </section>`;
+}
+
+function daysUntilDay(day, today) {
+  const clamp = (y, m) => new Date(y, m, Math.min(day, new Date(y, m + 1, 0).getDate()));
+  let next = clamp(today.getFullYear(), today.getMonth());
+  if (next < today) next = clamp(today.getFullYear(), today.getMonth() + 1);
+  return daysBetween(today, next);
+}
+
+function renderChips() {
+  $('catChips').innerHTML = CATEGORIES.map(c =>
+    `<button type="button" class="chip ${c.id === selectedCat ? 'on' : ''}" data-cat="${c.id}">${c.label}</button>`).join('');
+}
+
+let toastTimer;
+function toast(msg, ms = 2000) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function confetti(n) {
+  const pieces = ['🎉', '✨', '🎊', '⭐', '💚'];
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = pieces[i % pieces.length];
+    s.style.left = Math.random() * 92 + 'vw';
+    s.style.animationDuration = 1.8 + Math.random() * 1.8 + 's';
+    s.style.animationDelay = Math.random() * 0.6 + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 4500);
+  }
+}
+
+function showView(name) {
+  document.querySelectorAll('[data-view]').forEach(v => v.classList.toggle('hidden', v.dataset.view !== name));
+  document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === name));
+  window.scrollTo(0, 0);
+}
+
+// ---------- Händelser ----------
+$('catChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]');
+  if (!b) return;
+  selectedCat = b.dataset.cat;
+  renderChips();
+  $('amount').focus();
+});
+
+$('addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const amount = parseFloat($('amount').value);
+  if (!(amount > 0)) return;
+  state.tx.push({ id: uid(), date: ymd(new Date()), amount, cat: selectedCat, note: $('note').value.trim(), created: Date.now() });
+  save();
+  $('amount').value = '';
+  $('note').value = '';
+  $('amount').focus();
+  render();
+  const c = compute();
+  if (state.settings.income > 0 && c.todayLeft >= 0) toast(`${fmt(amount)} tillagt · ${fmt(c.todayLeft)} kvar idag 👌`);
+  else toast(`${fmt(amount)} tillagt`);
+});
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  const hit = sel => t.closest(sel);
+  let el;
+
+  if ((el = hit('[data-nav]'))) { showView(el.dataset.nav); return; }
+
+  if ((el = hit('[data-sub]'))) {
+    document.querySelectorAll('[data-sub]').forEach(b => b.classList.toggle('on', b === el));
+    document.querySelectorAll('[data-subpanel]').forEach(p => p.classList.toggle('hidden', p.dataset.subpanel !== el.dataset.sub));
+    return;
+  }
+  if ((el = hit('[data-del-tx]'))) {
+    state.tx = state.tx.filter(x => x.id !== el.dataset.delTx);
+    save(); render(); toast('Borttagen');
+    return;
+  }
+  if ((el = hit('[data-del-fixed]'))) {
+    state.fixed = state.fixed.filter(f => f.id !== el.dataset.delFixed);
+    save(); render(); toast('Borttagen');
+    return;
+  }
+
+  // Sparmål
+  if ((el = hit('[data-kind]'))) {
+    goalKind = el.dataset.kind;
+    document.querySelectorAll('[data-kind]').forEach(b => b.classList.toggle('on', b === el));
+    const trip = goalKind === 'trip';
+    $('gNameLbl').textContent = trip ? 'Vart ska du resa?' : 'Vad sparar du till?';
+    $('gName').placeholder = trip ? 't.ex. Japan' : 't.ex. Buffert, Ny dator';
+    $('gDateLbl').textContent = trip ? 'Avresa' : 'Klart till (valfritt)';
+    return;
+  }
+  if ((el = hit('[data-withdraw]'))) {
+    const input = el.closest('form').querySelector('input');
+    const amount = parseFloat(input.value);
+    if (amount > 0) { depositToGoal(el.dataset.withdraw, -amount); }
+    return;
+  }
+  if ((el = hit('[data-del-goal]'))) {
+    const g = state.goals.find(g => g.id === el.dataset.delGoal);
+    if (g && confirm(`Ta bort sparmålet "${g.name}"?`)) {
+      state.goals = state.goals.filter(x => x !== g);
+      save(); render(); toast('Sparmål borttaget');
+    }
+    return;
+  }
+
+  // Grupper
+  if ((el = hit('[data-open-group]'))) { openGroupId = el.dataset.openGroup; renderGroups(); window.scrollTo(0, 0); return; }
+  if (hit('[data-close-group]')) { openGroupId = null; renderGroups(); return; }
+  const group = state.groups.find(g => g.id === openGroupId);
+  if ((el = hit('[data-del-group]')) && group) {
+    if (confirm(`Ta bort gruppen "${group.name}" och all dess historik?`)) {
+      state.groups = state.groups.filter(g => g !== group);
+      openGroupId = null;
+      save(); render(); toast('Grupp borttagen');
+    }
+    return;
+  }
+  if ((el = hit('[data-settle]')) && group) {
+    const tr = JSON.parse(el.dataset.settle);
+    group.settlements.push({ id: uid(), ...tr, date: ymd(new Date()), created: Date.now() });
+    save(); render();
+    const done = settleUp(groupBalances(group)).length === 0;
+    if (done) { confetti(30); toast('Alla är kvitt! 🎉', 3000); } else toast('Betalning registrerad ✓');
+    return;
+  }
+  if ((el = hit('[data-del-gexp]')) && group) {
+    group.expenses = group.expenses.filter(x => x.id !== el.dataset.delGexp);
+    save(); render(); toast('Utgift borttagen');
+    return;
+  }
+  if ((el = hit('[data-del-gset]')) && group) {
+    group.settlements = group.settlements.filter(x => x.id !== el.dataset.delGset);
+    save(); render(); toast('Betalning ångrad');
+  }
+});
+
+document.addEventListener('submit', e => {
+  const f = e.target;
+
+  if (f.dataset.deposit) {
+    e.preventDefault();
+    const amount = parseFloat(f.querySelector('input').value);
+    if (amount > 0) depositToGoal(f.dataset.deposit, amount);
+    return;
+  }
+
+  if (f.id === 'groupExpenseForm') {
+    e.preventDefault();
+    const group = state.groups.find(g => g.id === openGroupId);
+    const fd = new FormData(f);
+    const amount = Math.round(parseFloat(fd.get('amount')) * 100);
+    const split = fd.getAll('split');
+    const desc = fd.get('desc').trim();
+    if (!group || !(amount > 0) || !desc) return;
+    if (!split.length) { toast('Välj minst en person att dela med'); return; }
+    group.expenses.push({ id: uid(), desc, amount, paidBy: fd.get('paidBy'), split, date: ymd(new Date()), created: Date.now() });
+
+    // Min andel räknas som en vanlig utgift i budgeten.
+    if (fd.get('toBudget') && split.includes(ME)) {
+      const myShare = Math.ceil(amount / split.length) / 100;
+      state.tx.push({ id: uid(), date: ymd(new Date()), amount: myShare, cat: 'ovrigt', note: `👥 ${group.name}: ${desc}`, created: Date.now() });
+    }
+    save(); render();
+    toast(`${desc} tillagd`);
+    return;
+  }
+
+  if (f.id === 'addMemberForm') {
+    e.preventDefault();
+    const group = state.groups.find(g => g.id === openGroupId);
+    const name = new FormData(f).get('name').trim();
+    if (!group || !name) return;
+    if (name === ME || group.members.includes(name)) { toast('Namnet finns redan i gruppen'); return; }
+    group.members.push(name);
+    save(); render(); toast(`${name} tillagd`);
+  }
+});
+
+$('goalForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('gName').value.trim();
+  const target = parseFloat($('gTarget').value);
+  if (!name || !(target > 0)) return;
+  state.goals.push({
+    id: uid(), kind: goalKind, name, target,
+    saved: Math.max(0, parseFloat($('gSaved').value) || 0),
+    date: $('gDate').value || '', created: Date.now(),
+  });
+  save();
+  e.target.reset();
+  render();
+  confetti(12);
+  toast(`Nytt sparmål: ${name}. Nu kör vi! 🚀`);
+});
+
+$('groupForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('grName').value.trim();
+  const others = [...new Set($('grMembers').value.split(',').map(s => s.trim()).filter(s => s && s !== ME))];
+  if (!name || !others.length) return;
+  const g = { id: uid(), name, members: [ME, ...others], expenses: [], settlements: [], created: Date.now() };
+  state.groups.push(g);
+  save();
+  e.target.reset();
+  openGroupId = g.id;
+  render();
+  window.scrollTo(0, 0);
+});
+
+$('fixedForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('fxName').value.trim();
+  const amount = parseFloat($('fxAmount').value);
+  const day = Math.min(31, Math.max(1, parseInt($('fxDay').value, 10) || 1));
+  if (!name || !(amount >= 0)) return;
+  state.fixed.push({ id: uid(), name, amount, day });
+  save();
+  e.target.reset();
+  $('fxDay').value = 1;
+  render();
+  toast(`${name} tillagd`);
+});
+
+$('settingsForm').addEventListener('submit', e => {
+  e.preventDefault();
+  state.settings.income = parseFloat($('sIncome').value) || 0;
+  state.settings.payday = Math.min(31, Math.max(1, parseInt($('sPayday').value, 10) || 25));
+  state.settings.save = parseFloat($('sSave').value) || 0;
+  save(); render(); toast('Sparat');
+});
+
+$('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `budget-backup-${ymd(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data.settings || !Array.isArray(data.tx) || !Array.isArray(data.fixed)) throw new Error();
+    if (!confirm('Ersätta all nuvarande data med backupen?')) return;
+    state = normalize(data);
+    openGroupId = null;
+    save(); render(); toast('Backup importerad');
+  } catch {
+    toast('Kunde inte läsa filen');
+  }
+  e.target.value = '';
+});
+
+// ---------- Installera som app (PWA) ----------
+const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installPrompt = null;
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+if (!isStandalone && isIOS) {
+  $('installCard').classList.remove('hidden');
+  $('installText').innerHTML = 'Tryck på <strong>Dela</strong>-knappen <span aria-hidden="true">⬆️</span> i Safari och välj <strong>Lägg till på hemskärmen</strong>.';
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installPrompt = e;
+  $('installCard').classList.remove('hidden');
+  $('installBtn').classList.remove('hidden');
+});
+
+$('installBtn').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  installPrompt = null;
+  if (outcome === 'accepted') $('installCard').classList.add('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  $('installCard').classList.add('hidden');
+  toast('Budget är installerad! 🎉', 3000);
+});
+
+renderChips();
+render();
+</script>
+</body>
+</html>

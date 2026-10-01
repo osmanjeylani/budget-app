@@ -1,0 +1,11 @@
+# Lokala inställningar för Claude/editorer
+.claude/
+.vscode/
+
+# Systemfiler
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Backups som exporterats från appen (innehåller din privata budgetdata)
+budget-backup-*.json
