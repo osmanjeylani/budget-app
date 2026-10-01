@@ -11,6 +11,10 @@ En enkel budgetapp som räknar per löneperiod i stället för per kalendermåna
 - **Sparmål** – för en resa eller en summa, med firande vid 25/50/75/100 %
 - **Positiv förstärkning** – sviter under dagsbudget och jämförelser med förra perioden
 - **Grupper** – dela kostnader med kompisar, appen räknar ut vem som ska betala vem
+- **Översikt** – stapeldiagram dag för dag mot dagsbudgeten, plus fördelning per kategori
+- **Redigera & ångra** – tryck på en utgift för att ändra belopp, kategori eller datum; borttagningar kan ångras
+- **Sök** – hitta utgifter bland alla perioder
+- **Ljust/mörkt tema** – följer telefonen eller väljs manuellt
 - **Installerbar (PWA)** – fungerar offline och kan läggas på hemskärmen
 
 All data sparas lokalt i webbläsaren. Inget skickas till någon server.
