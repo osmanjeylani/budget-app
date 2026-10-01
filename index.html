@@ -16,33 +16,74 @@
 <meta name="apple-mobile-web-app-title" content="Budget">
 <style>
   :root {
-    --bg: #f5f5f2;
+    color-scheme: light;
+    --bg: #f3f4f0;
     --card: #ffffff;
-    --text: #1d1d1b;
-    --muted: #6b6b66;
-    --line: #e4e4de;
+    --raised: #f7f8f5;
+    --text: #1b1d1a;
+    --muted: #6a6d66;
+    --line: #e3e5df;
     --accent: #2f6b4f;
+    --accent-2: #3f8a66;
     --accent-soft: #e3efe8;
+    --on-accent: #ffffff;
     --warn: #b0602a;
     --warn-soft: #f7e9df;
     --gold: #b8860b;
     --gold-soft: #f8efd9;
-    --radius: 14px;
+    --hero: linear-gradient(140deg, #2a5f46 0%, #3a8461 100%);
+    --hero-neg: #ffd3b8;
+    --shadow: 0 1px 2px rgba(20, 30, 20, .04), 0 4px 16px rgba(20, 30, 20, .05);
+    --shadow-lg: 0 10px 40px rgba(20, 30, 20, .18);
+    --toast-action: #9be3bb;
+    --radius: 18px;
+    --radius-sm: 12px;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #151614;
-      --card: #1f201d;
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121311;
+      --card: #1c1d1a;
+      --raised: #242522;
       --text: #ecece6;
-      --muted: #9a9a92;
-      --line: #32332f;
+      --muted: #9a9b93;
+      --line: #2f302c;
       --accent: #6fbf94;
-      --accent-soft: #23362b;
+      --accent-2: #8fd1ad;
+      --accent-soft: #22352a;
+      --on-accent: #10140f;
       --warn: #e09a68;
       --warn-soft: #3a2a1f;
       --gold: #e3b94f;
       --gold-soft: #3a321d;
+      --hero: linear-gradient(140deg, #1f4434 0%, #2c6449 100%);
+      --hero-neg: #ffc29c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+      --shadow-lg: 0 10px 40px rgba(0, 0, 0, .5);
+      --toast-action: #24573f;
     }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121311;
+    --card: #1c1d1a;
+    --raised: #242522;
+    --text: #ecece6;
+    --muted: #9a9b93;
+    --line: #2f302c;
+    --accent: #6fbf94;
+    --accent-2: #8fd1ad;
+    --accent-soft: #22352a;
+    --on-accent: #10140f;
+    --warn: #e09a68;
+    --warn-soft: #3a2a1f;
+    --gold: #e3b94f;
+    --gold-soft: #3a321d;
+    --hero: linear-gradient(140deg, #1f4434 0%, #2c6449 100%);
+    --hero-neg: #ffc29c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, .5);
+    --toast-action: #24573f;
   }
   * { box-sizing: border-box; }
   html { overflow-x: hidden; }
@@ -50,124 +91,221 @@
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font: 16px/1.45 system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   main {
     max-width: 560px; margin: 0 auto;
-    padding: calc(16px + env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));
   }
   /* Ingen markering/zoom vid dubbeltryck när den körs som app */
-  button, .chip, nav.bottom { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  h1 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 4px 0 12px; letter-spacing: .02em; }
-  h2 { font-size: 15px; margin: 0 0 12px; }
+  button, .chip, nav.bottom, .list li { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  [data-view] { animation: viewIn .28s ease both; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } }
+  h1 { font-size: 26px; font-weight: 750; letter-spacing: -.02em; margin: 6px 2px 14px; }
+  h1 .kicker { display: block; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+  h2 { font-size: 16px; font-weight: 650; margin: 0 0 12px; }
   .card {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     padding: 18px;
     margin-bottom: 14px;
+    box-shadow: var(--shadow);
   }
-  .hero { text-align: center; padding: 26px 18px; }
-  .hero .label { color: var(--muted); font-size: 14px; }
-  .hero .big { font-size: 44px; font-weight: 700; letter-spacing: -.02em; margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
-  .hero .big.neg { color: var(--warn); }
-  .hero .sub { color: var(--muted); font-size: 14px; }
+
+  /* Hero */
+  .hero {
+    text-align: center; padding: 26px 20px 20px;
+    background: var(--hero); color: #fff; border: 0;
+    position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px;
+    border-radius: 50%; background: rgba(255, 255, 255, .07); pointer-events: none;
+  }
+  .hero .label { opacity: .85; font-size: 14px; font-weight: 500; }
+  .hero .big { font-size: 52px; font-weight: 800; letter-spacing: -.03em; margin: 2px 0 4px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .hero .big.neg { color: var(--hero-neg); }
+  .hero .sub { opacity: .85; font-size: 14px; }
+  .pace { margin: 16px 0 2px; text-align: left; }
+  .pace .track { position: relative; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .18); }
+  .pace .fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: #fff; transition: width .6s cubic-bezier(.2, .8, .2, 1); }
+  .pace .fill.over { background: var(--hero-neg); }
+  .pace .now { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; background: rgba(255, 255, 255, .85); box-shadow: 0 0 0 2px rgba(0, 0, 0, .15); }
+  .pace .legend { display: flex; justify-content: space-between; font-size: 12px; opacity: .85; margin-top: 6px; }
   .forecast {
-    margin-top: 14px; padding: 10px 12px; border-radius: 10px;
-    font-size: 14px; background: var(--accent-soft);
+    margin-top: 14px; padding: 10px 12px; border-radius: var(--radius-sm);
+    font-size: 14px; background: rgba(255, 255, 255, .14); text-align: left;
   }
-  .forecast.warn { background: var(--warn-soft); }
-  .wins { list-style: none; margin: 10px 0 0; padding: 0; text-align: left; }
-  .wins li { font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--gold-soft); margin-top: 6px; }
+  .forecast.warn { background: rgba(255, 190, 150, .22); }
+  .wins { list-style: none; margin: 8px 0 0; padding: 0; text-align: left; }
+  .wins li { font-size: 14px; padding: 9px 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, .1); margin-top: 6px; animation: viewIn .4s ease both; }
+
   .row { display: flex; gap: 8px; align-items: center; }
   .spread { justify-content: space-between; }
   input, select, button { font: inherit; color: inherit; }
   input, select {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
-    padding: 10px 12px; width: 100%; min-width: 0;
+    background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 11px 12px; width: 100%; min-width: 0;
+    transition: border-color .15s, box-shadow .15s;
   }
   input[type=checkbox] { width: auto; accent-color: var(--accent); }
-  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  .amount-input { font-size: 22px; font-weight: 600; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  input[type=search] { -webkit-appearance: none; appearance: none; }
+  .amount-input { font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
   button {
-    border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer;
-    background: var(--accent); color: var(--card); font-weight: 600; white-space: nowrap;
+    border: 0; border-radius: var(--radius-sm); padding: 11px 16px; cursor: pointer;
+    background: var(--accent); color: var(--on-accent); font-weight: 650; white-space: nowrap;
+    transition: transform .12s ease, opacity .15s, background .15s;
   }
-  button.small { padding: 6px 12px; font-size: 14px; }
-  button.ghost { background: transparent; color: var(--muted); padding: 6px 8px; font-weight: 400; }
+  button:active { transform: scale(.96); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.small { padding: 7px 12px; font-size: 14px; }
+  button.ghost { background: transparent; color: var(--muted); padding: 6px 8px; font-weight: 500; }
   button.ghost:hover { color: var(--text); }
-  button.outline { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+  button.outline { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 550; }
+  button.danger { background: var(--warn-soft); color: var(--warn); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
   .chip {
-    background: var(--bg); color: var(--text); border: 1px solid var(--line);
-    padding: 6px 10px; border-radius: 999px; font-weight: 400; font-size: 14px;
+    background: var(--raised); color: var(--text); border: 1px solid var(--line);
+    padding: 7px 11px; border-radius: 999px; font-weight: 500; font-size: 14px;
   }
-  .chip.on { background: var(--accent); color: var(--card); border-color: var(--accent); }
+  .chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+  /* Listor */
   .list { list-style: none; margin: 0; padding: 0; }
-  .list li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
   .list li:first-child { border-top: 0; }
-  .list .what { flex: 1; min-width: 0; }
-  .list .what small { display: block; color: var(--muted); font-size: 13px; }
-  .amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .list li.day { border-top: 0; padding: 14px 0 4px; font-size: 13px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; justify-content: space-between; }
+  .list li.day:first-child { padding-top: 0; }
+  .list li.day + li { border-top: 0; }
+  .list li.tx { cursor: pointer; border-radius: 10px; }
+  .list li.tx:active { background: var(--raised); }
+  .list .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .list .what small { display: block; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ico-bubble {
+    flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--raised); font-size: 19px;
+  }
+  .amt { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
   .pos { color: var(--accent); }
   .negc { color: var(--warn); }
   .empty { color: var(--muted); font-size: 14px; }
-  .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
-  .bar > span { display: block; height: 100%; background: var(--accent); transition: width .5s; }
+  .empty-state { text-align: center; padding: 18px 8px; color: var(--muted); font-size: 14px; }
+  .empty-state .big-emoji { font-size: 36px; display: block; margin-bottom: 6px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 5px; }
+  .bar > span { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s cubic-bezier(.2, .8, .2, 1); }
   .bar.thick { height: 12px; border-radius: 6px; }
   .bar.done > span { background: var(--gold); }
-  .cat-row { margin-bottom: 10px; }
+  .cat-row { margin-bottom: 12px; }
   .cat-row .row { justify-content: space-between; font-size: 14px; }
+  .cat-row .row .amt { font-weight: 600; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .grid label, .lbl { font-size: 13px; color: var(--muted); display: block; }
+  .grid label, .lbl { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
   .grid .full { grid-column: 1 / -1; }
-  .subtabs { display: flex; gap: 6px; margin-bottom: 14px; }
-  .subtabs button { flex: 1; background: var(--card); color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
-  .subtabs button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .subtabs { display: flex; gap: 4px; margin-bottom: 14px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+  .subtabs button { flex: 1; background: transparent; color: var(--muted); font-weight: 600; padding: 9px 8px; border-radius: 10px; }
+  .subtabs button.on { background: var(--text); color: var(--bg); }
   .hidden { display: none !important; }
   .muted { color: var(--muted); font-size: 14px; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .card-head h2 { margin: 0; }
+  .search { margin-bottom: 8px; }
+
+  /* Diagram: dag för dag */
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .gridline { stroke: var(--line); stroke-width: 1; }
+  .chart .ref { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .chart .axis { fill: var(--muted); font-size: 11px; }
+  .chart .b { fill: var(--accent); }
+  .chart .b.over { fill: var(--warn); }
+  .chart .hit { fill: transparent; cursor: pointer; }
+  .chart .col.dim .b { opacity: .35; }
+  .chart .col.today .b { stroke: var(--text); stroke-width: 1.5; }
+  .chart-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .chart-key i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .chart-key i.line { height: 0; border-top: 2px dashed var(--muted); border-radius: 0; width: 14px; vertical-align: 3px; }
+  .tip {
+    position: absolute; pointer-events: none; transform: translate(-50%, -100%);
+    background: var(--text); color: var(--bg); font-size: 13px; padding: 7px 10px; border-radius: 10px;
+    white-space: nowrap; box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .12s;
+  }
+  .tip.show { opacity: 1; }
+  .tip strong { font-variant-numeric: tabular-nums; }
 
   /* Bottennavigering */
   nav.bottom {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    background: var(--card); border-top: 1px solid var(--line);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    background: color-mix(in srgb, var(--card) 82%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px); backdrop-filter: saturate(1.6) blur(16px);
+    border-top: 1px solid var(--line);
     display: flex; justify-content: center; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
   }
   nav.bottom .inner { display: flex; width: 100%; max-width: 560px; }
   nav.bottom button {
-    flex: 1; background: none; color: var(--muted); font-weight: 500; font-size: 12px;
-    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px;
+    flex: 1; background: none; color: var(--muted); font-weight: 600; font-size: 11px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px;
   }
-  nav.bottom button .ico { font-size: 20px; line-height: 1; }
+  nav.bottom button .ico { font-size: 20px; line-height: 1; padding: 4px 16px; border-radius: 999px; transition: background .2s; filter: grayscale(.6); opacity: .8; }
   nav.bottom button.on { color: var(--text); }
+  nav.bottom button.on .ico { background: var(--accent-soft); filter: none; opacity: 1; }
 
   /* Sparmål */
   .goal .head { display: flex; align-items: center; gap: 12px; }
-  .goal .emoji { font-size: 30px; }
-  .goal .title { font-weight: 600; }
-  .goal .pct { margin-left: auto; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .goal .emoji { font-size: 26px; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); flex: none; }
+  .goal.is-done .emoji { background: var(--gold-soft); }
+  .goal .title { font-weight: 650; font-size: 17px; }
+  .goal .pct { margin-left: auto; font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
   .goal .meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .goal .hint { font-size: 14px; margin-top: 10px; }
+  .goal .hint { font-size: 14px; margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--raised); }
   .goal form { margin-top: 12px; }
 
   /* Grupper */
-  .group-card { cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  .group-card { cursor: pointer; display: flex; align-items: center; gap: 12px; transition: border-color .15s, transform .12s; }
   .group-card:hover { border-color: var(--muted); }
-  .group-card .emoji { font-size: 28px; }
-  .transfer { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg); margin-top: 8px; }
+  .group-card:active { transform: scale(.99); }
+  .group-card .emoji { font-size: 24px; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--raised); flex: none; }
+  .transfer { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-sm); background: var(--raised); margin-top: 8px; }
   .transfer .who { flex: 1; font-size: 15px; }
   .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; }
   .checks label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); }
 
-  .toast {
-    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
-    background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px;
-    font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none;
-    max-width: calc(100% - 32px); text-align: center;
+  /* Redigera utgift (bottenark) */
+  dialog.sheet {
+    border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 560px;
+    background: var(--card); color: var(--text);
+    border-radius: 22px 22px 0 0; box-shadow: var(--shadow-lg);
   }
-  .toast.show { opacity: 1; }
-  .confetti { position: fixed; top: -30px; font-size: 22px; pointer-events: none; animation: fall linear forwards; z-index: 10; }
+  dialog.sheet[open] { animation: sheetIn .26s cubic-bezier(.2, .8, .2, 1); }
+  dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
+  @keyframes sheetIn { from { transform: translateY(100%); } }
+  .sheet form { padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); }
+  .sheet .grip { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
+  .sheet h2 { font-size: 18px; }
+  .sheet .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .actions button { flex: 1; }
+
+  .seg { display: flex; gap: 4px; padding: 4px; background: var(--raised); border: 1px solid var(--line); border-radius: 14px; }
+  .seg button { flex: 1; background: transparent; color: var(--muted); font-weight: 600; padding: 8px; border-radius: 10px; }
+  .seg button.on { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+
+  .toast {
+    position: fixed; left: 16px; right: 16px; margin: 0 auto; width: fit-content; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateY(10px);
+    background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 14px;
+    font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+    max-width: 528px; text-align: center; z-index: 20; box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .toast.show.has-action { pointer-events: auto; }
+  .toast button { background: transparent; color: var(--toast-action); padding: 2px 4px; font-weight: 700; }
+  .confetti { position: fixed; top: -30px; font-size: 22px; pointer-events: none; animation: fall linear forwards; z-index: 30; }
   @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .7; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
 </style>
 </head>
 <body>
@@ -175,12 +313,16 @@
 
 <!-- ================= BUDGET ================= -->
 <div data-view="budget">
-  <h1 id="periodTitle">Budget</h1>
+  <h1><span class="kicker" id="periodTitle">Löneperiod</span><span id="greeting">Budget</span></h1>
 
   <section class="card hero">
     <div class="label">Kvar att spendera idag</div>
     <div class="big" id="todayLeft">–</div>
     <div class="sub" id="periodLeft"></div>
+    <div class="pace hidden" id="pace" aria-hidden="true">
+      <div class="track"><div class="fill" id="paceFill"></div><div class="now" id="paceNow"></div></div>
+      <div class="legend"><span id="paceSpent"></span><span id="paceTime"></span></div>
+    </div>
     <div class="forecast" id="forecast"></div>
     <ul class="wins" id="wins"></ul>
   </section>
@@ -192,19 +334,28 @@
         <button type="submit">Lägg till</button>
       </div>
       <div class="chips" id="catChips"></div>
-      <input id="note" placeholder="Anteckning (valfritt)">
+      <div class="row">
+        <input id="note" placeholder="Anteckning (valfritt)" style="flex:2">
+        <input id="txDate" type="date" aria-label="Datum" style="flex:0 0 152px">
+      </div>
     </form>
   </section>
 
   <div class="subtabs">
     <button data-sub="tx" class="on">Utgifter</button>
-    <button data-sub="cats">Kategorier</button>
+    <button data-sub="cats">Översikt</button>
     <button data-sub="fixed">Fasta</button>
   </div>
 
   <section class="card" data-subpanel="tx">
-    <h2>Den här perioden</h2>
+    <div class="card-head"><h2 id="txHeading">Den här perioden</h2><span class="muted" id="txCount"></span></div>
+    <input id="txSearch" class="search" type="search" placeholder="🔍 Sök bland alla utgifter" autocomplete="off">
     <ul class="list" id="txList"></ul>
+  </section>
+
+  <section class="card hidden" data-subpanel="cats">
+    <div class="card-head"><h2>Dag för dag</h2><span class="muted" id="chartAvg"></span></div>
+    <div class="chart" id="dailyChart"></div>
   </section>
 
   <section class="card hidden" data-subpanel="cats">
@@ -226,7 +377,7 @@
 
 <!-- ================= SPARMÅL ================= -->
 <div data-view="goals" class="hidden">
-  <h1>Sparmål</h1>
+  <h1><span class="kicker">Spara</span>Sparmål</h1>
   <div id="goalList"></div>
 
   <section class="card">
@@ -248,7 +399,7 @@
 <!-- ================= GRUPPER ================= -->
 <div data-view="groups" class="hidden">
   <div id="groupOverview">
-    <h1>Grupper</h1>
+    <h1><span class="kicker">Dela kostnader</span>Grupper</h1>
     <p class="muted" style="margin-top:-6px">Dela kostnader på resor, i hushållet eller med kompisar. Appen räknar ut vem som ska betala vem.</p>
     <div id="groupList"></div>
     <section class="card">
@@ -265,13 +416,22 @@
 
 <!-- ================= INSTÄLLNINGAR ================= -->
 <div data-view="settings" class="hidden">
-  <h1>Inställningar</h1>
+  <h1><span class="kicker">Din app</span>Inställningar</h1>
   <section class="card hidden" id="installCard">
     <h2>📲 Installera appen</h2>
     <p class="muted" id="installText" style="margin:0 0 12px">Lägg Budget på hemskärmen så öppnas den som en vanlig app, även utan internet.</p>
     <button id="installBtn" class="hidden" style="width:100%">Installera på hemskärmen</button>
   </section>
   <section class="card">
+    <h2>Utseende</h2>
+    <div class="seg" id="themeSeg">
+      <button type="button" data-theme-opt="auto">Auto</button>
+      <button type="button" data-theme-opt="light">☀️ Ljust</button>
+      <button type="button" data-theme-opt="dark">🌙 Mörkt</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Lön &amp; sparande</h2>
     <form id="settingsForm" class="grid" autocomplete="off">
       <div><label>Lön efter skatt (kr/mån)</label><input id="sIncome" type="number" step="any" min="0"></div>
       <div><label>Lönedag</label><input id="sPayday" type="number" min="1" max="31"></div>
@@ -282,9 +442,9 @@
       Perioden räknas från lön till lön. Infaller lönedagen på en helg flyttas den till fredagen innan.
       All data sparas bara i den här webbläsaren.
     </p>
-    <div class="row" style="margin-top:8px">
-      <button class="ghost" id="exportBtn">⬇ Exportera backup</button>
-      <button class="ghost" id="importBtn">⬆ Importera backup</button>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap">
+      <button class="small outline" id="exportBtn">⬇ Exportera backup</button>
+      <button class="small outline" id="importBtn">⬆ Importera backup</button>
       <input type="file" id="importFile" accept="application/json" class="hidden">
     </div>
   </section>
@@ -299,26 +459,44 @@
   <button data-nav="settings"><span class="ico">⚙️</span>Inställningar</button>
 </div></nav>
 
-<div class="toast" id="toast"></div>
+<dialog class="sheet" id="txSheet">
+  <form id="txEditForm" method="dialog" autocomplete="off">
+    <div class="grip"></div>
+    <h2>Redigera utgift</h2>
+    <input class="amount-input" id="eAmount" type="number" inputmode="decimal" step="any" min="0" required>
+    <div class="chips" id="eCatChips"></div>
+    <div class="grid">
+      <div class="full"><label for="eNote">Anteckning</label><input id="eNote"></div>
+      <div class="full"><label for="eDate">Datum</label><input id="eDate" type="date" required></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="danger" id="eDelete">Ta bort</button>
+      <button type="button" class="outline" id="eCancel">Avbryt</button>
+      <button type="submit" value="save">Spara</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button type="button" id="toastAction" class="hidden"></button></div>
 
 <script>
 const CATEGORIES = [
-  { id: 'mat',       label: '🛒 Mat' },
-  { id: 'resto',     label: '🍔 Restaurang' },
-  { id: 'transport', label: '🚌 Transport' },
-  { id: 'noje',      label: '🎉 Nöje' },
-  { id: 'shopping',  label: '🛍️ Shopping' },
-  { id: 'halsa',     label: '💊 Hälsa' },
-  { id: 'hem',       label: '🏠 Hem' },
-  { id: 'ovrigt',    label: '📦 Övrigt' },
-];
+  { id: 'mat',       emoji: '🛒', name: 'Mat' },
+  { id: 'resto',     emoji: '🍔', name: 'Restaurang' },
+  { id: 'transport', emoji: '🚌', name: 'Transport' },
+  { id: 'noje',      emoji: '🎉', name: 'Nöje' },
+  { id: 'shopping',  emoji: '🛍️', name: 'Shopping' },
+  { id: 'halsa',     emoji: '💊', name: 'Hälsa' },
+  { id: 'hem',       emoji: '🏠', name: 'Hem' },
+  { id: 'ovrigt',    emoji: '📦', name: 'Övrigt' },
+].map(c => ({ ...c, label: `${c.emoji} ${c.name}` }));
 const STORAGE_KEY = 'budget-app-v1';
 const DAY = 86400000;
 const ME = 'Jag';
 
 // ---------- Data ----------
 function defaultState() {
-  return { settings: { income: 0, payday: 25, save: 0 }, tx: [], fixed: [], goals: [], groups: [] };
+  return { settings: { income: 0, payday: 25, save: 0, theme: 'auto' }, tx: [], fixed: [], goals: [], groups: [] };
 }
 function normalize(s) {
   const d = defaultState();
@@ -338,6 +516,8 @@ let state = load();
 let selectedCat = 'mat';
 let goalKind = 'trip';
 let openGroupId = null;
+let txQuery = '';
+let editingTxId = null;
 
 // ---------- Hjälpfunktioner ----------
 const kr = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 });
@@ -345,6 +525,7 @@ const kr2 = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK',
 const fmt = n => kr.format(Math.round(n));
 const fmtOre = o => (o % 100 === 0 ? kr : kr2).format(o / 100); // belopp i öre
 const dateFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' });
+const weekdayFmt = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'short' });
 const longDateFmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -352,7 +533,8 @@ const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new D
 const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const catLabel = id => (CATEGORIES.find(c => c.id === id) || CATEGORIES.at(-1)).label;
+const catOf = id => CATEGORIES.find(c => c.id === id) || CATEGORIES.at(-1);
+const catLabel = id => catOf(id).label;
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const $ = id => document.getElementById(id);
 
@@ -551,12 +733,39 @@ function render() {
   $('sIncome').value = state.settings.income || '';
   $('sPayday').value = state.settings.payday;
   $('sSave').value = state.settings.save || '';
+  document.querySelectorAll('[data-theme-opt]').forEach(b => b.classList.toggle('on', b.dataset.themeOpt === state.settings.theme));
+}
+
+// ---------- Tema ----------
+function applyTheme() {
+  const t = state.settings.theme;
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
+  const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => {
+    m.content = dark ? '#121311' : '#f3f4f0';
+    m.removeAttribute('media');
+  });
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 5 ? 'God natt' : h < 10 ? 'God morgon' : h < 18 ? 'Hej!' : 'God kväll';
+}
+
+// Relativ dagrubrik i utgiftslistan: Idag, Igår, annars veckodag + datum.
+function dayHeading(dateStr, today) {
+  const diff = daysBetween(parseYmd(dateStr), today);
+  if (diff === 0) return 'Idag';
+  if (diff === 1) return 'Igår';
+  return weekdayFmt.format(parseYmd(dateStr));
 }
 
 function renderBudget() {
   const c = compute();
   const lastDay = new Date(c.end.getTime() - DAY);
   $('periodTitle').textContent = `Löneperiod ${dateFmt.format(c.start)} – ${dateFmt.format(lastDay)}`;
+  $('greeting').textContent = greeting();
 
   const big = $('todayLeft');
   const forecast = $('forecast');
@@ -565,7 +774,17 @@ function renderBudget() {
     big.classList.remove('neg');
     $('periodLeft').textContent = 'Börja med att fylla i din lön under Inställningar.';
     forecast.className = 'forecast hidden';
+    $('pace').classList.add('hidden');
   } else {
+    // Hur stor del av den rörliga budgeten som är använd jämfört med hur långt perioden har gått.
+    const usedPct = c.variable > 0 ? Math.min(100, c.spent / c.variable * 100) : 100;
+    const timePct = (c.daysElapsed - 1) / c.totalDays * 100;
+    $('pace').classList.remove('hidden');
+    $('paceFill').style.width = usedPct.toFixed(1) + '%';
+    $('paceFill').classList.toggle('over', usedPct > timePct + 5);
+    $('paceNow').style.left = `calc(${timePct.toFixed(1)}% - 1px)`;
+    $('paceSpent').textContent = `${fmt(c.spent)} av ${fmt(c.variable)} använt`;
+    $('paceTime').textContent = `Dag ${c.daysElapsed} av ${c.totalDays}`;
     big.textContent = fmt(c.todayLeft);
     big.classList.toggle('neg', c.todayLeft < 0);
     $('periodLeft').textContent = `${fmt(c.variable - c.spent)} kvar till lön · ${plural(c.daysLeft, 'dag', 'dagar')}`;
@@ -582,14 +801,8 @@ function renderBudget() {
   }
   $('wins').innerHTML = computeWins(c).map(w => `<li>${w}</li>`).join('');
 
-  const sorted = [...c.periodTx].sort((a, b) => b.date.localeCompare(a.date) || b.created - a.created);
-  $('txList').innerHTML = sorted.length ? sorted.map(t => `
-    <li>
-      <div class="what">${esc(catLabel(t.cat))}${t.note ? ' · ' + esc(t.note) : ''}
-        <small>${dateFmt.format(parseYmd(t.date))}</small></div>
-      <span class="amt">${fmt(t.amount)}</span>
-      <button class="ghost" data-del-tx="${t.id}" title="Ta bort">✕</button>
-    </li>`).join('') : '<li class="empty">Inga utgifter än. Lägg till din första ovanför.</li>';
+  renderTxList(c);
+  renderDailyChart(c);
 
   const byCat = {};
   c.periodTx.forEach(t => byCat[t.cat] = (byCat[t.cat] || 0) + t.amount);
@@ -597,7 +810,7 @@ function renderBudget() {
   const max = cats.length ? cats[0][1] : 1;
   $('catBreakdown').innerHTML = cats.length ? cats.map(([id, sum]) => `
     <div class="cat-row">
-      <div class="row"><span>${esc(catLabel(id))}</span><span>${fmt(sum)} · ${Math.round(sum / c.spent * 100)} %</span></div>
+      <div class="row"><span>${esc(catLabel(id))}</span><span><span class="amt">${fmt(sum)}</span> <span class="muted">· ${Math.round(sum / c.spent * 100)} %</span></span></div>
       <div class="bar"><span style="width:${(sum / max * 100).toFixed(1)}%"></span></div>
     </div>`).join('') : '<p class="empty">Inget spenderat den här perioden.</p>';
 
@@ -612,13 +825,124 @@ function renderBudget() {
     : '<li class="empty">Lägg till hyra, el, mobil, streamingtjänster m.m.</li>';
 }
 
+function renderTxList(c) {
+  const q = txQuery.trim().toLowerCase();
+  const source = q
+    ? state.tx.filter(t => `${catOf(t.cat).name} ${t.note || ''}`.toLowerCase().includes(q))
+    : c.periodTx;
+  const sorted = [...source].sort((a, b) => b.date.localeCompare(a.date) || b.created - a.created);
+  $('txHeading').textContent = q ? 'Sökresultat' : 'Den här perioden';
+  $('txCount').textContent = sorted.length ? `${plural(sorted.length, 'utgift', 'utgifter')} · ${fmt(sorted.reduce((s, t) => s + t.amount, 0))}` : '';
+
+  if (!sorted.length) {
+    $('txList').innerHTML = q
+      ? `<li class="empty-state"><span class="big-emoji">🔍</span>Inget matchar ”${esc(txQuery.trim())}”.</li>`
+      : '<li class="empty-state"><span class="big-emoji">🧾</span>Inga utgifter än.<br>Lägg till din första ovanför.</li>';
+    return;
+  }
+  const byDay = new Map();
+  sorted.forEach(t => byDay.has(t.date) ? byDay.get(t.date).push(t) : byDay.set(t.date, [t]));
+  $('txList').innerHTML = [...byDay].map(([date, list]) => `
+    <li class="day"><span>${esc(dayHeading(date, c.today))}</span><span class="amt">${fmt(list.reduce((s, t) => s + t.amount, 0))}</span></li>
+    ${list.map(t => `
+    <li class="tx" data-edit-tx="${t.id}">
+      <span class="ico-bubble">${catOf(t.cat).emoji}</span>
+      <div class="what">${t.note ? esc(t.note) : esc(catOf(t.cat).name)}
+        <small>${esc(catOf(t.cat).name)}</small></div>
+      <span class="amt">${fmt(t.amount)}</span>
+    </li>`).join('')}`).join('');
+}
+
+// Stapeldiagram: utgifter per dag i perioden, mot den genomsnittliga dagsbudgeten.
+function renderDailyChart(c) {
+  const el = $('dailyChart');
+  const days = [];
+  for (let i = 0; i < c.totalDays; i++) {
+    const d = new Date(c.start.getFullYear(), c.start.getMonth(), c.start.getDate() + i);
+    days.push({ d, key: ymd(d), sum: 0, future: d > c.today });
+  }
+  const idx = new Map(days.map((x, i) => [x.key, i]));
+  c.periodTx.forEach(t => { const i = idx.get(t.date); if (i !== undefined) days[i].sum += t.amount; });
+
+  const avgBudget = state.settings.income > 0 ? c.variable / c.totalDays : 0;
+  $('chartAvg').textContent = avgBudget > 0 ? `Snitt ${fmt(c.spent / c.daysElapsed)}/dag` : '';
+  if (!c.spent) {
+    el.innerHTML = '<p class="empty-state"><span class="big-emoji">📊</span>Diagrammet fylls i när du lägger till utgifter.</p>';
+    return;
+  }
+
+  const W = 340, H = 150, top = 14, bottom = 20, left = 0;
+  const plotH = H - top - bottom;
+  const max = Math.max(avgBudget, ...days.map(x => x.sum)) * 1.08 || 1;
+  const slot = (W - left) / days.length;
+  const bw = Math.max(2, slot - 2);
+  const y = v => top + plotH - v / max * plotH;
+  const r = Math.min(4, bw / 2);
+
+  const bars = days.map((x, i) => {
+    const bx = left + i * slot + (slot - bw) / 2;
+    const h = x.sum / max * plotH;
+    const base = top + plotH;
+    const rr = Math.min(r, h);
+    const path = h > 0
+      ? `M${bx},${base}V${base - h + rr}Q${bx},${base - h} ${bx + rr},${base - h}H${bx + bw - rr}Q${bx + bw},${base - h} ${bx + bw},${base - h + rr}V${base}Z`
+      : '';
+    const cls = ['col', x.future ? 'dim' : '', x.key === ymd(c.today) ? 'today' : ''].join(' ');
+    return `<g class="${cls}" data-i="${i}">
+      ${path ? `<path class="b ${avgBudget > 0 && x.sum > avgBudget ? 'over' : ''}" d="${path}"/>` : ''}
+      <rect class="hit" x="${left + i * slot}" y="${top}" width="${slot}" height="${plotH + bottom}"/>
+    </g>`;
+  }).join('');
+
+  const labelIdx = [0, Math.floor(days.length / 2), days.length - 1];
+  const labels = labelIdx.map(i => {
+    const anchor = i === 0 ? 'start' : i === days.length - 1 ? 'end' : 'middle';
+    const x = i === 0 ? left : i === days.length - 1 ? W : left + i * slot + slot / 2;
+    return `<text class="axis" x="${x}" y="${H - 4}" text-anchor="${anchor}">${dateFmt.format(days[i].d)}</text>`;
+  }).join('');
+  const ref = avgBudget > 0
+    ? `<line class="ref" x1="${left}" x2="${W}" y1="${y(avgBudget)}" y2="${y(avgBudget)}"/>
+       <text class="axis" x="${W}" y="${y(avgBudget) - 5}" text-anchor="end">${fmt(avgBudget)}/dag</text>`
+    : '';
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Utgifter per dag den här perioden">
+      <line class="gridline" x1="${left}" x2="${W}" y1="${top + plotH}" y2="${top + plotH}"/>
+      ${bars}${ref}${labels}
+    </svg>
+    <div class="tip" id="chartTip"></div>
+    <div class="chart-key">
+      <span><i style="background:var(--accent)"></i>Under dagsbudget</span>
+      <span><i style="background:var(--warn)"></i>Över dagsbudget</span>
+      ${avgBudget > 0 ? '<span><i class="line"></i>Genomsnittlig dagsbudget</span>' : ''}
+    </div>`;
+
+  const tip = $('chartTip');
+  const svg = el.querySelector('svg');
+  const show = e => {
+    const g = e.target.closest('[data-i]');
+    if (!g) return;
+    const x = days[+g.dataset.i];
+    const rect = svg.getBoundingClientRect();
+    const scale = rect.width / W;
+    const cx = Math.min(rect.width - 60, Math.max(60, (+g.dataset.i + .5) * slot * scale));
+    tip.style.left = cx + 'px';
+    tip.style.top = Math.max(0, (y(x.sum) - 6) * scale) + 'px';
+    tip.innerHTML = `${esc(weekdayFmt.format(x.d))}<br><strong>${x.future ? 'Inte än' : fmt(x.sum)}</strong>`;
+    tip.classList.add('show');
+  };
+  svg.addEventListener('pointerover', show);
+  svg.addEventListener('pointerdown', show);
+  svg.addEventListener('pointerleave', () => tip.classList.remove('show'));
+}
+
 function renderGoals() {
   const goals = [...state.goals].sort((a, b) => (a.saved >= a.target) - (b.saved >= b.target) || a.created - b.created);
   $('goalList').innerHTML = goals.length ? goals.map(g => {
     const pct = Math.min(100, g.saved / g.target * 100);
     const done = g.saved >= g.target;
     return `
-    <section class="card goal">
+    <section class="card goal ${done ? 'is-done' : ''}">
       <div class="head">
         <span class="emoji">${goalEmoji(g)}</span>
         <div>
@@ -637,7 +961,7 @@ function renderGoals() {
         <button type="button" class="ghost" data-del-goal="${g.id}" title="Ta bort mål">✕</button>
       </form>
     </section>`;
-  }).join('') : '<p class="muted">Inga sparmål än. Vad drömmer du om? En resa, en buffert, en ny dator?</p>';
+  }).join('') : '<section class="card empty-state"><span class="big-emoji">🌱</span>Inga sparmål än. Vad drömmer du om?<br>En resa, en buffert, en ny dator?</section>';
 }
 
 function renderGroups() {
@@ -676,7 +1000,7 @@ function renderGroups() {
       <button class="ghost" data-close-group>← Alla grupper</button>
       <button class="ghost" data-del-group="${g.id}">Ta bort grupp</button>
     </div>
-    <h1 style="font-size:20px;color:var(--text)">👥 ${esc(g.name)}</h1>
+    <h1><span class="kicker">Grupp</span>${esc(g.name)}</h1>
     <p class="muted" style="margin-top:-6px">Totalt ${fmtOre(total)} i gemensamma utgifter</p>
 
     <section class="card">
@@ -743,13 +1067,34 @@ function renderChips() {
     `<button type="button" class="chip ${c.id === selectedCat ? 'on' : ''}" data-cat="${c.id}">${c.label}</button>`).join('');
 }
 
-let toastTimer;
-function toast(msg, ms = 2000) {
+let toastTimer, toastUndo = null;
+function toast(msg, ms = 2000, undo = null) {
   const el = $('toast');
-  el.textContent = msg;
+  $('toastMsg').textContent = msg;
+  toastUndo = undo;
+  $('toastAction').textContent = 'Ångra';
+  $('toastAction').classList.toggle('hidden', !undo);
+  el.classList.toggle('has-action', !!undo);
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); toastUndo = null; }, undo ? Math.max(ms, 5000) : ms);
+}
+$('toastAction').addEventListener('click', () => {
+  if (!toastUndo) return;
+  const fn = toastUndo;
+  toastUndo = null;
+  fn();
+  save(); render();
+  toast('Återställd ↩️');
+});
+
+// Tar bort ett element ur en lista och erbjuder att ångra.
+function removeWithUndo(list, item, msg) {
+  const i = list.indexOf(item);
+  if (i < 0) return;
+  list.splice(i, 1);
+  save(); render();
+  toast(msg, 5000, () => list.splice(Math.min(i, list.length), 0, item));
 }
 
 function confetti(n) {
@@ -785,10 +1130,13 @@ $('addForm').addEventListener('submit', e => {
   e.preventDefault();
   const amount = parseFloat($('amount').value);
   if (!(amount > 0)) return;
-  state.tx.push({ id: uid(), date: ymd(new Date()), amount, cat: selectedCat, note: $('note').value.trim(), created: Date.now() });
+  const date = $('txDate').value || ymd(new Date());
+  state.tx.push({ id: uid(), date, amount, cat: selectedCat, note: $('note').value.trim(), created: Date.now() });
   save();
+  navigator.vibrate?.(10);
   $('amount').value = '';
   $('note').value = '';
+  $('txDate').value = ymd(new Date());
   $('amount').focus();
   render();
   const c = compute();
@@ -808,14 +1156,15 @@ document.addEventListener('click', e => {
     document.querySelectorAll('[data-subpanel]').forEach(p => p.classList.toggle('hidden', p.dataset.subpanel !== el.dataset.sub));
     return;
   }
-  if ((el = hit('[data-del-tx]'))) {
-    state.tx = state.tx.filter(x => x.id !== el.dataset.delTx);
-    save(); render(); toast('Borttagen');
+  if ((el = hit('[data-edit-tx]'))) { openTxSheet(el.dataset.editTx); return; }
+  if ((el = hit('[data-theme-opt]'))) {
+    state.settings.theme = el.dataset.themeOpt;
+    save(); applyTheme(); render();
     return;
   }
   if ((el = hit('[data-del-fixed]'))) {
-    state.fixed = state.fixed.filter(f => f.id !== el.dataset.delFixed);
-    save(); render(); toast('Borttagen');
+    const f = state.fixed.find(f => f.id === el.dataset.delFixed);
+    removeWithUndo(state.fixed, f, `${f.name} borttagen`);
     return;
   }
 
@@ -865,8 +1214,7 @@ document.addEventListener('click', e => {
     return;
   }
   if ((el = hit('[data-del-gexp]')) && group) {
-    group.expenses = group.expenses.filter(x => x.id !== el.dataset.delGexp);
-    save(); render(); toast('Utgift borttagen');
+    removeWithUndo(group.expenses, group.expenses.find(x => x.id === el.dataset.delGexp), 'Utgift borttagen');
     return;
   }
   if ((el = hit('[data-del-gset]')) && group) {
@@ -989,12 +1337,58 @@ $('importFile').addEventListener('change', async e => {
     if (!confirm('Ersätta all nuvarande data med backupen?')) return;
     state = normalize(data);
     openGroupId = null;
-    save(); render(); toast('Backup importerad');
+    save(); applyTheme(); render(); toast('Backup importerad');
   } catch {
     toast('Kunde inte läsa filen');
   }
   e.target.value = '';
 });
+
+// ---------- Redigera utgift ----------
+let editCat = 'mat';
+function renderEditChips() {
+  $('eCatChips').innerHTML = CATEGORIES.map(c =>
+    `<button type="button" class="chip ${c.id === editCat ? 'on' : ''}" data-ecat="${c.id}">${c.label}</button>`).join('');
+}
+function openTxSheet(id) {
+  const t = state.tx.find(t => t.id === id);
+  if (!t) return;
+  editingTxId = id;
+  editCat = t.cat;
+  $('eAmount').value = t.amount;
+  $('eNote').value = t.note || '';
+  $('eDate').value = t.date;
+  renderEditChips();
+  $('txSheet').showModal();
+}
+$('eCatChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-ecat]');
+  if (!b) return;
+  editCat = b.dataset.ecat;
+  renderEditChips();
+});
+$('eCancel').addEventListener('click', () => $('txSheet').close());
+// Stäng genom att trycka utanför arket.
+$('txSheet').addEventListener('click', e => { if (e.target === $('txSheet')) $('txSheet').close(); });
+$('txEditForm').addEventListener('submit', e => {
+  const t = state.tx.find(t => t.id === editingTxId);
+  const amount = parseFloat($('eAmount').value);
+  if (!t || !(amount > 0) || !$('eDate').value) { e.preventDefault(); return; }
+  Object.assign(t, { amount, cat: editCat, note: $('eNote').value.trim(), date: $('eDate').value });
+  save(); render(); toast('Ändrad ✓');
+});
+$('eDelete').addEventListener('click', () => {
+  const t = state.tx.find(t => t.id === editingTxId);
+  $('txSheet').close();
+  if (t) removeWithUndo(state.tx, t, `${fmt(t.amount)} borttagen`);
+});
+
+$('txSearch').addEventListener('input', e => {
+  txQuery = e.target.value;
+  renderTxList(compute());
+});
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
 
 // ---------- Installera som app (PWA) ----------
 const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -1030,6 +1424,9 @@ window.addEventListener('appinstalled', () => {
   toast('Budget är installerad! 🎉', 3000);
 });
 
+$('txDate').value = ymd(new Date());
+$('txDate').max = ymd(new Date());
+applyTheme();
 renderChips();
 render();
 </script>

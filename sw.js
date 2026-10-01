@@ -1,6 +1,6 @@
 // Service worker: gör att appen fungerar offline.
 // Höj CACHE-versionen när du ändrar i appen, så hämtar telefonerna den nya versionen.
-const CACHE = 'budget-v1';
+const CACHE = 'budget-v2';
 const FILES = [
   './',
   './index.html',
